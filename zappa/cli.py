@@ -2429,6 +2429,9 @@ class ZappaCLI:
             async_response_table = self.stage_config.get('async_response_table', '')
             settings_s += "ASYNC_RESPONSE_TABLE='{0!s}'\n".format(async_response_table)
 
+            asgi = self.stage_config.get("asgi", False)
+            settings_s += "ASGI={}\n".format(asgi)
+
             # Lambda requires a specific chmod
             temp_settings = tempfile.NamedTemporaryFile(delete=False)
             os.chmod(temp_settings.name, 0o644)

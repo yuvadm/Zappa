@@ -4,6 +4,7 @@ durationpy
 hjson
 jmespath
 kappa==0.6.0
+mangum
 pip>=9.0.1
 python-dateutil
 python-slugify

@@ -13,6 +13,7 @@ import tarfile
 
 from builtins import str
 from werkzeug.wrappers import Response
+from mangum import Mangum
 
 # This file may be copied into a project's root,
 # so handle both scenarios.
@@ -146,7 +147,10 @@ class LambdaHandler:
                 wsgi_app_function = get_django_wsgi(self.settings.DJANGO_SETTINGS)
                 self.trailing_slash = True
 
-            self.wsgi_app = ZappaWSGIMiddleware(wsgi_app_function)
+            self.wsgi_app = wsgi_app_function
+            if not self.settings.ASGI:
+                self.wsgi_app = ZappaWSGIMiddleware(self.wsgi_app)
+
 
     def load_remote_project_archive(self, project_zip_path):
         """
@@ -478,7 +482,7 @@ class LambdaHandler:
             time_start = datetime.datetime.now()
 
             # This is a normal HTTP request
-            if event.get('httpMethod', None):
+            if event.get('httpMethod', None) and not settings.ASGI:
                 script_name = ''
                 is_elb_context = False
                 headers = merge_headers(event)
@@ -576,6 +580,8 @@ class LambdaHandler:
                     common_log(environ, response, response_time=response_time_ms)
 
                     return zappa_returndict
+            elif event.get('httpMethod', None) and settings.ASGI:
+                return Mangum(self.wsgi_app)(event, context)
         except Exception as e:  # pragma: no cover
             # Print statements are visible in the logs either way
             print(e)
